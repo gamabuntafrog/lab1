@@ -1,13 +1,16 @@
 var express = require("express");
 var router = express.Router();
 const { v4 } = require("uuid");
+const { Emails } = require("../models/emails");
 
 const store = {
   emails: [], // email {theme, description, sendDate, to: {name, address}}
 };
 
 router.get("/", async function (req, res) {
-  res.status(200).json({ data: { emails: store.emails } });
+  const emails = await Emails.find({});
+
+  res.status(200).json({ data: { emails } });
 });
 
 router.post("/", async function (req, res) {
@@ -18,15 +21,14 @@ router.post("/", async function (req, res) {
     return res.status(400).json({ message: "BAD REQUEST" });
   }
 
-  store.emails.push({
-    id: v4(),
+  const email = await Emails.create({
     theme,
     description,
     sendDate: new Date(),
     to: { name, address },
   });
 
-  res.status(200).json({ message: "SUCCESS" });
+  res.status(200).json({ message: "SUCCESS", data: email });
 });
 
 router.get("/:id", async function (req, res) {
@@ -36,7 +38,7 @@ router.get("/:id", async function (req, res) {
     return res.status(400).json({ message: "BAD REQUEST" });
   }
 
-  const email = store.emails.find((em) => em.id === id);
+  const email = await Emails.findById(id);
 
   if (!email) {
     return res.status(404).json({ message: "NOT FOUND" });
@@ -52,15 +54,15 @@ router.put("/:id", async function (req, res) {
     return res.status(400).json({ message: "BAD REQUEST" });
   }
 
+  const email = await Emails.findById(id);
+
+  if (!email) {
+    return res.status(400).json({ message: "BAD REQUEST" });
+  }
+
   const { theme, description, to = {} } = req.body;
 
   const { name, address } = to;
-
-  const emailIndex = store.emails.findIndex((em) => em.id === id);
-
-  if (emailIndex === -1) {
-    return res.status(404).json({ message: "EMAIL NOT FOUND" });
-  }
 
   const updatedEmail = {};
 
@@ -80,7 +82,7 @@ router.put("/:id", async function (req, res) {
     updatedEmail.address = address;
   }
 
-  store.emails[emailIndex] = { ...store.emails[emailIndex], ...updatedEmail };
+  await Emails.findByIdAndUpdate(id, updatedEmail);
 
   res.status(200).json({ message: "SUCCESS" });
 });
@@ -92,13 +94,13 @@ router.delete("/:id", async function (req, res) {
     return res.status(400).json({ message: "BAD REQUEST" });
   }
 
-  const email = store.emails.find((em) => em.id === id);
+  const email = await Emails.findById(id);
 
   if (!email) {
     return res.status(404).json({ message: "NOT FOUND" });
   }
 
-  store.emails = store.emails.filter((el) => el.id !== id);
+  await Emails.findByIdAndDelete(id);
 
   res.status(200).json({ message: "SUCCESS" });
 });

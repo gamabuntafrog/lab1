@@ -8,8 +8,26 @@ var createError = require("http-errors");
 var express = require("express");
 
 var indexRouter = require("./routes/index");
+const { db } = require("./db");
+
+const mongoose = require("mongoose");
+
+// Connection URI
+const uri =
+  "mongodb+srv://kirikslaw:xgGOOgCxlyrA47ZE@cluster0.rbrlxaq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+
+mongoose
+  .connect(uri)
+  .then(() => console.log("DB CONNECTED"))
+  .catch((e) => console.log("DB ERROR", e));
 
 var app = express();
+
+async function main() {
+  console.log(await db);
+}
+
+main();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
