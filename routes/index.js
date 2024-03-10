@@ -2,7 +2,8 @@ var express = require("express");
 var router = express.Router();
 const { Emails } = require("../models/emails");
 const { checkId } = require("../middlewares/checkId");
-const { checkFields } = require("../middlewares/checkFields");
+const { validate } = require("../middlewares/validate");
+const { createEmailSchema, updateEmailsSchema } = require("../schemas");
 
 router.get("/", async function (req, res) {
   const emails = await Emails.find({});
@@ -10,23 +11,19 @@ router.get("/", async function (req, res) {
   res.status(200).json({ data: { emails } });
 });
 
-router.post(
-  "/",
-  checkFields(["theme", "description", "to"]),
-  async function (req, res) {
-    const { theme, description, to = {} } = req.body;
-    const { name, address } = to;
+router.post("/", validate(createEmailSchema), async function (req, res) {
+  const { theme, description, to = {} } = req.body;
+  const { name, address } = to;
 
-    const email = await Emails.create({
-      theme,
-      description,
-      sendDate: new Date(),
-      to: { name, address },
-    });
+  const email = await Emails.create({
+    theme,
+    description,
+    sendDate: new Date(),
+    to: { name, address },
+  });
 
-    res.status(200).json({ message: "SUCCESS", data: email });
-  }
-);
+  res.status(200).json({ message: "SUCCESS", data: email });
+});
 
 router.get("/:id", checkId("id"), async function (req, res) {
   const { id } = req.params;
@@ -40,7 +37,7 @@ router.get("/:id", checkId("id"), async function (req, res) {
   res.status(200).json({ data: { email } });
 });
 
-router.put("/:id", checkId("id"), async function (req, res) {
+router.put("/:id", validate(updateEmailsSchema), async function (req, res) {
   const { id } = req.params;
 
   const email = await Emails.findById(id);
