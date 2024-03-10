@@ -1,6 +1,8 @@
 var express = require("express");
 var router = express.Router();
 const { Emails } = require("../models/emails");
+const { checkId } = require("../middlewares/checkId");
+const { checkFields } = require("../middlewares/checkFields");
 
 router.get("/", async function (req, res) {
   const emails = await Emails.find({});
@@ -8,30 +10,26 @@ router.get("/", async function (req, res) {
   res.status(200).json({ data: { emails } });
 });
 
-router.post("/", async function (req, res) {
-  const { theme, description, to = {} } = req.body;
-  const { name, address } = to;
+router.post(
+  "/",
+  checkFields(["theme", "description", "to"]),
+  async function (req, res) {
+    const { theme, description, to = {} } = req.body;
+    const { name, address } = to;
 
-  if (!theme || !description || !name || !address) {
-    return res.status(400).json({ message: "BAD REQUEST" });
+    const email = await Emails.create({
+      theme,
+      description,
+      sendDate: new Date(),
+      to: { name, address },
+    });
+
+    res.status(200).json({ message: "SUCCESS", data: email });
   }
+);
 
-  const email = await Emails.create({
-    theme,
-    description,
-    sendDate: new Date(),
-    to: { name, address },
-  });
-
-  res.status(200).json({ message: "SUCCESS", data: email });
-});
-
-router.get("/:id", async function (req, res) {
+router.get("/:id", checkId("id"), async function (req, res) {
   const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "BAD REQUEST" });
-  }
 
   const email = await Emails.findById(id);
 
@@ -42,12 +40,8 @@ router.get("/:id", async function (req, res) {
   res.status(200).json({ data: { email } });
 });
 
-router.put("/:id", async function (req, res) {
+router.put("/:id", checkId("id"), async function (req, res) {
   const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "BAD REQUEST" });
-  }
 
   const email = await Emails.findById(id);
 
@@ -82,12 +76,8 @@ router.put("/:id", async function (req, res) {
   res.status(200).json({ message: "SUCCESS" });
 });
 
-router.delete("/:id", async function (req, res) {
+router.delete("/:id", checkId("id"), async function (req, res) {
   const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).json({ message: "BAD REQUEST" });
-  }
 
   const email = await Emails.findById(id);
 
