@@ -1,11 +1,6 @@
 var express = require("express");
 var router = express.Router();
-const { v4 } = require("uuid");
 const { Emails } = require("../models/emails");
-
-const store = {
-  emails: [], // email {theme, description, sendDate, to: {name, address}}
-};
 
 router.get("/", async function (req, res) {
   const emails = await Emails.find({});
